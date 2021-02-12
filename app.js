@@ -4,12 +4,16 @@ const { graphqlHTTP } = require('express-graphql')
 const { graphql, buildSchema } = require('graphql')
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 const Block = require('./models/block')
 const User = require('./models/user')
 
+const isAuth = require('./middleware/is-auth')
+
 const app = express()
 app.use(express.json())
+app.use(isAuth)
 app.use('/graphql', graphqlHTTP({
   schema: buildSchema(`
     type Block {
@@ -25,6 +29,12 @@ app.use('/graphql', graphqlHTTP({
       password: String
     }
 
+    type AuthData {
+      userId: ID!
+      token: String!
+      tokenExpiration: Int!
+    }
+
     input BlockInput {
       label: String!
       content: String!
@@ -37,7 +47,8 @@ app.use('/graphql', graphqlHTTP({
     }
 
     type RootQuery {
-      blocks: [Block!]
+      blocks(label: String!): [Block!]
+      login(email: String!, password: String!): AuthData!
     }
 
     type RootMutation {
@@ -50,9 +61,16 @@ app.use('/graphql', graphqlHTTP({
       mutation: RootMutation
     }
     `),
-    rootValue: {
-      blocks: () => {
-        return Block.find()
+  rootValue: {
+    blocks: (args, req) => {
+      let blocks_query
+      if (args.label === '') {
+        blocks_query = { creator: req.userId }
+      } else {
+        blocks_query = { creator: req.userId, label: args.label }
+      }
+
+      return Block.find(blocks_query)
         .then(blocks => {
           return blocks.map(block => {
             return { ...block._doc, _id: block.id }
@@ -61,20 +79,34 @@ app.use('/graphql', graphqlHTTP({
           console.log(err)
           throw err
         })
-      },
-      createBlock: (args) => {
-        const block = new Block({
-          label: args.blockInput.label,
-          content: args.blockInput.content,
-          date: args.blockInput.date,
-          creator: "60227c9fb6aa9b77283bca4c"
-        })
-        let createdBlock
-        return block
+    },
+    login: async ({ email, password }) => {
+      const user = await User.findOne({ email: email })
+      if (!user) {
+        throw new Error('User does not exist!')
+      }
+      const isEqual = await bcrypt.compare(password, user.password)
+      if (!isEqual) {
+        throw new Error('Password is incorrect!')
+      }
+      const token = jwt.sign({ userId: user.id }, 'temporarySecretKey', {
+        expiresIn: '1h'
+      })
+      return { userId: user.id, token: token, tokenExpiration: 1 }
+    },
+    createBlock: (args, req) => {
+      const block = new Block({
+        label: args.blockInput.label,
+        content: args.blockInput.content,
+        date: args.blockInput.date,
+        creator: req.userId
+      })
+      let createdBlock
+      return block
         .save()
         .then(res => {
           createdBlock = { ...res._doc, _id: res.id }
-          return User.findById("60227c9fb6aa9b77283bca4c")
+          return User.findById(req.userId)
         })
         .then(user => {
           if (!user) {
@@ -90,14 +122,14 @@ app.use('/graphql', graphqlHTTP({
           console.log(err)
           throw err
         })
-      },
-      createUser: (args) => {
-        return User.findOne({email: args.userInput.email}).then(user => {
-          if (user) {
-            throw new Error('User exists already.')
-          }
-          return bcrypt.hash(args.userInput.password, 12)
-        })
+    },
+    createUser: (args) => {
+      return User.findOne({ email: args.userInput.email }).then(user => {
+        if (user) {
+          throw new Error('User exists already.')
+        }
+        return bcrypt.hash(args.userInput.password, 12)
+      })
         .then(hashedPassword => {
           const user = new User({
             email: args.userInput.email,
@@ -106,22 +138,20 @@ app.use('/graphql', graphqlHTTP({
           return user.save()
         })
         .then(res => {
-          return {...res._doc, _id: res.id, password: null}
+          return { ...res._doc, _id: res.id, password: null }
         })
         .catch(err => {
           throw err
         })
-      }
-    },
-    graphiql: true
-  }))
+    }
+  },
+  graphiql: true
+}))
 
-  mongoose.connect(
-    `mongodb+srv://${process.env.MONGO_USER}:${
-      process.env.MONGO_PASSWORD}@cluster0.d7f4t.mongodb.net/${
-        process.env.MONGO_DB}?retryWrites=true&w=majority`
-      ).then(
-        app.listen(3000)
-      ).catch(err => {
-        console.log(err)
-      })
+mongoose.connect(
+  `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.d7f4t.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority`
+).then(
+  app.listen(3000)
+).catch(err => {
+  console.log(err)
+})
