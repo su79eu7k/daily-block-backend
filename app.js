@@ -1,7 +1,7 @@
 
 const express = require('express')
 const { graphqlHTTP } = require('express-graphql')
-const { graphql, buildSchema } = require('graphql')
+const { buildSchema } = require('graphql')
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
@@ -63,14 +63,14 @@ app.use('/graphql', graphqlHTTP({
     `),
   rootValue: {
     blocks: (args, req) => {
-      let blocks_query
+      let blocksQuery
       if (args.label === '') {
-        blocks_query = { creator: req.userId }
+        blocksQuery = { creator: req.userId }
       } else {
-        blocks_query = { creator: req.userId, label: args.label }
+        blocksQuery = { creator: req.userId, label: args.label }
       }
 
-      return Block.find(blocks_query)
+      return Block.find(blocksQuery)
         .then(blocks => {
           return blocks.map(block => {
             return { ...block._doc, _id: block.id }
