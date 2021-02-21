@@ -43,6 +43,10 @@ app.use('/graphql', graphqlHTTP({
       tokenExpiration: Int!
     }
 
+    type DeletedCount {
+      deletedCount: Int!
+    }
+
     input BlockInput {
       label: String!
       content: String!
@@ -55,12 +59,14 @@ app.use('/graphql', graphqlHTTP({
     }
 
     type RootQuery {
+      familyBlocks(date: Float!): [Block!]
       blocks(label: String!): [Block!]
       login(email: String!, password: String!): AuthData!
     }
 
     type RootMutation {
       createBlock(blockInput: BlockInput): Block
+      deleteFamilyBlocks(date: Float!): DeletedCount!
       createUser(userInput: UserInput): User
     }
 
@@ -70,6 +76,19 @@ app.use('/graphql', graphqlHTTP({
     }
     `),
   rootValue: {
+    familyBlocks: (args, req) => {
+      const blocksQuery = { creator: req.userId, date: args.date }
+
+      return Block.find(blocksQuery)
+        .then(blocks => {
+          return blocks.map(block => {
+            return { ...block._doc, _id: block.id }
+          })
+        }).catch(err => {
+          console.log(err)
+          throw err
+        })
+    },
     blocks: (args, req) => {
       let blocksQuery
       if (args.label === '') {
@@ -130,6 +149,17 @@ app.use('/graphql', graphqlHTTP({
           console.log(err)
           throw err
         })
+    },
+    deleteFamilyBlocks: async (args, req) => {
+      const blocksQuery = { creator: req.userId, date: args.date }
+
+      try {
+        const res = await Block.deleteMany(blocksQuery)
+        return { deletedCount: res.deletedCount }
+      } catch (err) {
+        console.log(err)
+        throw err
+      }
     },
     createUser: (args) => {
       return User.findOne({ email: args.userInput.email }).then(user => {
