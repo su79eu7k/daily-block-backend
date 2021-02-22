@@ -77,6 +77,10 @@ app.use('/graphql', graphqlHTTP({
     `),
   rootValue: {
     familyBlocks: (args, req) => {
+      if (!req.isAuth) {
+        throw new Error('Unauthenticated!')
+      }
+
       const blocksQuery = { creator: req.userId, date: args.date }
 
       return Block.find(blocksQuery)
@@ -90,6 +94,10 @@ app.use('/graphql', graphqlHTTP({
         })
     },
     blocks: (args, req) => {
+      if (!req.isAuth) {
+        throw new Error('Unauthenticated!')
+      }
+
       let blocksQuery
       if (args.label === '') {
         blocksQuery = { creator: req.userId }
@@ -122,6 +130,10 @@ app.use('/graphql', graphqlHTTP({
       return { userId: user.id, token: token, tokenExpiration: 1 }
     },
     createBlock: (args, req) => {
+      if (!req.isAuth) {
+        throw new Error('Unauthenticated!')
+      }
+
       const block = new Block({
         label: args.blockInput.label,
         content: args.blockInput.content,
@@ -151,6 +163,10 @@ app.use('/graphql', graphqlHTTP({
         })
     },
     deleteFamilyBlocks: async (args, req) => {
+      if (!req.isAuth) {
+        throw new Error('Unauthenticated!')
+      }
+
       const blocksQuery = { creator: req.userId, date: args.date }
 
       try {
