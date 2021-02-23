@@ -9,6 +9,7 @@ const Block = require('./models/block')
 const User = require('./models/user')
 
 const isAuth = require('./middleware/is-auth')
+const { errorTypes, errorDetails } = require('./errors/error-types')
 
 const app = express()
 app.use(express.json())
@@ -23,6 +24,9 @@ app.use((req, res, next) => {
 })
 app.use(isAuth)
 app.use('/graphql', graphqlHTTP({
+  customFormatErrorFn: (error) => {
+    return errorDetails[error.message]
+  },
   schema: buildSchema(`
     type Block {
       _id: ID!
@@ -95,7 +99,7 @@ app.use('/graphql', graphqlHTTP({
     },
     blocks: (args, req) => {
       if (!req.isAuth) {
-        throw new Error('Unauthenticated!')
+        throw new Error(errorTypes.UNAUTHORIZED)
       }
 
       let blocksQuery
