@@ -80,24 +80,23 @@ app.use('/graphql', graphqlHTTP({
     }
     `),
   rootValue: {
-    familyBlocks: (args, req) => {
+    familyBlocks: async (args, req) => {
       if (!req.isAuth) {
-        throw new Error('Unauthenticated!')
+        throw new Error(errorTypes.UNAUTHORIZED)
       }
 
       const blocksQuery = { creator: req.userId, date: args.date }
 
-      return Block.find(blocksQuery)
-        .then(blocks => {
-          return blocks.map(block => {
-            return { ...block._doc, _id: block.id }
-          })
-        }).catch(err => {
-          console.log(err)
-          throw err
+      try {
+        const blocks = await Block.find(blocksQuery)
+        return blocks.map(block => {
+          return { ...block._doc, _id: block.id }
         })
+      } catch (error) {
+        console.log(error)
+      }
     },
-    blocks: (args, req) => {
+    blocks: async (args, req) => {
       if (!req.isAuth) {
         throw new Error(errorTypes.UNAUTHORIZED)
       }
@@ -109,33 +108,35 @@ app.use('/graphql', graphqlHTTP({
         blocksQuery = { creator: req.userId, label: args.label }
       }
 
-      return Block.find(blocksQuery)
-        .then(blocks => {
-          return blocks.map(block => {
-            return { ...block._doc, _id: block.id }
-          })
-        }).catch(err => {
-          console.log(err)
-          throw err
+      try {
+        const blocks = await Block.find(blocksQuery)
+        return blocks.map(block => {
+          return { ...block._doc, _id: block.id }
         })
+      } catch (error) {
+        console.log(error)
+      }
     },
     login: async ({ email, password }) => {
       const user = await User.findOne({ email: email })
       if (!user) {
         throw new Error('User does not exist!')
       }
+
       const isEqual = await bcrypt.compare(password, user.password)
       if (!isEqual) {
         throw new Error('Password is incorrect!')
       }
+
       const token = jwt.sign({ userId: user.id }, 'temporarySecretKey', {
         expiresIn: '1h'
       })
+
       return { userId: user.id, token: token, tokenExpiration: 1 }
     },
-    createBlock: (args, req) => {
+    createBlock: async (args, req) => {
       if (!req.isAuth) {
-        throw new Error('Unauthenticated!')
+        throw new Error(errorTypes.UNAUTHORIZED)
       }
 
       const block = new Block({
@@ -144,31 +145,27 @@ app.use('/graphql', graphqlHTTP({
         date: args.blockInput.date,
         creator: req.userId
       })
+
       let createdBlock
-      return block
-        .save()
-        .then(res => {
-          createdBlock = { ...res._doc, _id: res.id }
-          return User.findById(req.userId)
-        })
-        .then(user => {
-          if (!user) {
-            throw new Error('User not found.')
-          }
-          user.createdBlocks.push(block)
-          return user.save()
-        })
-        .then(res => {
-          return createdBlock
-        })
-        .catch(err => {
-          console.log(err)
-          throw err
-        })
+      try {
+        const res = await block.save()
+        createdBlock = { ...res._doc, _id: res.id }
+
+        const user = await User.findById(req.userId)
+        if (!user) {
+          throw new Error('User not found.')
+        }
+        user.createdBlocks.push(block)
+        await user.save()
+
+        return createdBlock
+      } catch (error) {
+        console.log(error)
+      }
     },
     deleteFamilyBlocks: async (args, req) => {
       if (!req.isAuth) {
-        throw new Error('Unauthenticated!')
+        throw new Error(errorTypes.UNAUTHORIZED)
       }
 
       const blocksQuery = { creator: req.userId, date: args.date }
@@ -181,26 +178,24 @@ app.use('/graphql', graphqlHTTP({
         throw err
       }
     },
-    createUser: (args) => {
-      return User.findOne({ email: args.userInput.email }).then(user => {
+    createUser: async (args) => {
+      try {
+        const user = await User.findOne({ email: args.userInput.email })
         if (user) {
-          throw new Error('User exists already.')
+          throw new Error('User already exists.')
         }
-        return bcrypt.hash(args.userInput.password, 12)
-      })
-        .then(hashedPassword => {
-          const user = new User({
-            email: args.userInput.email,
-            password: hashedPassword
-          })
-          return user.save()
+
+        const hashedPassword = await bcrypt.hash(args.userInput.password, 12)
+        const userHased = new User({
+          email: args.userInput.email,
+          password: hashedPassword
         })
-        .then(res => {
-          return { ...res._doc, _id: res.id, password: null }
-        })
-        .catch(err => {
-          throw err
-        })
+        const res = await userHased.save()
+
+        return { ...res._doc, _id: res.id, password: null }
+      } catch (error) {
+        console.log(error)
+      }
     }
   },
   graphiql: true
