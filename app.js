@@ -173,9 +173,8 @@ app.use('/graphql', graphqlHTTP({
       try {
         const res = await Block.deleteMany(blocksQuery)
         return { deletedCount: res.deletedCount }
-      } catch (err) {
-        console.log(err)
-        throw err
+      } catch (error) {
+        console.log(error)
       }
     },
     createUser: async (args) => {
@@ -205,6 +204,6 @@ mongoose.connect(
   `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.d7f4t.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority`
 ).then(
   app.listen(8000)
-).catch(err => {
-  console.log(err)
+).catch(error => {
+  console.log(error)
 })
