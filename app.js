@@ -109,7 +109,7 @@ app.use('/graphql', graphqlHTTP({
       }
 
       try {
-        const blocks = await Block.find(blocksQuery)
+        const blocks = await Block.find(blocksQuery).sort({ date: -1 })
         return blocks.map(block => {
           return { ...block._doc, _id: block.id }
         })
