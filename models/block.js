@@ -15,6 +15,10 @@ const blockSchema = new Schema({
     type: Number,
     required: true
   },
+  sn: {
+    type: Number,
+    required: true
+  },
   creator: {
     type: Schema.Types.ObjectId,
     ref: 'User'

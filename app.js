@@ -33,6 +33,7 @@ app.use('/graphql', graphqlHTTP({
       label: String!
       content: String!
       date: Float!
+      sn: Int!
     }
 
     type User {
@@ -55,6 +56,7 @@ app.use('/graphql', graphqlHTTP({
       label: String!
       content: String!
       date: Float!
+      sn: Int!
     }
 
     input UserInput {
@@ -143,6 +145,7 @@ app.use('/graphql', graphqlHTTP({
         label: args.blockInput.label,
         content: args.blockInput.content,
         date: args.blockInput.date,
+        sn: args.blockInput.sn,
         creator: req.userId
       })
 
