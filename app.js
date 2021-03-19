@@ -149,10 +149,9 @@ app.use('/graphql', graphqlHTTP({
         creator: req.userId
       })
 
-      let createdBlock
       try {
         const res = await block.save()
-        createdBlock = { ...res._doc, _id: res.id }
+        const createdBlock = { ...res._doc, _id: res.id }
 
         const user = await User.findById(req.userId)
         if (!user) {
@@ -171,28 +170,29 @@ app.use('/graphql', graphqlHTTP({
         throw new Error(errorTypes.UNAUTHORIZED)
       }
 
-      const blocksQuery = { creator: req.userId, date: args.date }
-
+      let blocksQuery
       try {
+        blocksQuery = { creator: req.userId, date: args.date }
         const res = await Block.deleteMany(blocksQuery)
+
         return { deletedCount: res.deletedCount }
       } catch (error) {
         console.log(error)
       }
     },
     createUser: async (args) => {
-      try {
-        const user = await User.findOne({ email: args.userInput.email })
-        if (user) {
-          throw new Error('User already exists.')
-        }
+      const user = await User.findOne({ email: args.userInput.email })
+      if (user) {
+        throw new Error(errorTypes.USER_EXISTS)
+      }
 
-        const hashedPassword = await bcrypt.hash(args.userInput.password, 12)
-        const userHased = new User({
-          email: args.userInput.email,
-          password: hashedPassword
-        })
-        const res = await userHased.save()
+      const hashedPassword = await bcrypt.hash(args.userInput.password, 12)
+      const userHashed = new User({
+        email: args.userInput.email,
+        password: hashedPassword
+      })
+      try {
+        const res = await userHashed.save()
 
         return { ...res._doc, _id: res.id, password: null }
       } catch (error) {
