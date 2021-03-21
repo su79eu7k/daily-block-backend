@@ -173,6 +173,12 @@ app.use('/graphql', graphqlHTTP({
       let blocksQuery
       try {
         blocksQuery = { creator: req.userId, date: args.date }
+        const familyBlocks = await Block.find(blocksQuery, '_id')
+
+        const user = await User.findById(req.userId)
+        familyBlocks.forEach((elem) => { user.createdBlocks.pull(elem) })
+        await user.save()
+
         const res = await Block.deleteMany(blocksQuery)
 
         return { deletedCount: res.deletedCount }
