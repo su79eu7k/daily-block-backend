@@ -9,7 +9,15 @@ const userSchema = new Schema({
   },
   password: {
     type: String,
-    required: true
+    required: false
+  },
+  name: {
+    type: String,
+    required: false
+  },
+  picture: {
+    type: String,
+    required: false
   },
   createdBlocks: {
     type: [

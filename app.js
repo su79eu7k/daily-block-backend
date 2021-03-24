@@ -40,6 +40,8 @@ app.use('/graphql', graphqlHTTP({
       _id: ID!
       email: String!
       password: String
+      name: String
+      picture: String
     }
 
     type AuthData {
@@ -64,6 +66,12 @@ app.use('/graphql', graphqlHTTP({
       password: String!
     }
 
+    input AuthUserGoogleInput {
+      email: String!
+      name: String!
+      picture: String!
+    }
+
     type RootQuery {
       familyBlocks(date: Float!): [Block!]
       blocks(label: String!): [Block!]
@@ -74,6 +82,7 @@ app.use('/graphql', graphqlHTTP({
       createBlock(blockInput: BlockInput): Block
       deleteFamilyBlocks(date: Float!): DeletedCount!
       createUser(userInput: UserInput): User
+      authUserGoogle(authUserGoogleInput: AuthUserGoogleInput): AuthData!
     }
 
     schema {
@@ -204,6 +213,22 @@ app.use('/graphql', graphqlHTTP({
       } catch (error) {
         console.log(error)
       }
+    },
+    authUserGoogle: async (args) => {
+      const user = await User.findOne({ email: args.authUserGoogleInput.email })
+      if (!user) {
+        const user = new User({
+          email: args.authUserGoogleInput.email,
+          name: args.authUserGoogleInput.name,
+          picture: args.authUserGoogleInput.picture
+        })
+        await user.save()
+      }
+      const token = jwt.sign({ userId: user.id }, 'temporarySecretKey', {
+        expiresIn: '1h'
+      })
+
+      return { userId: user.id, token: token, tokenExpiration: 1 }
     }
   },
   graphiql: true
