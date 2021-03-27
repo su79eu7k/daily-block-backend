@@ -1,8 +1,0 @@
-{
-  "env": {
-    "MONGO_USER": "su79eu7k-tester",
-    "MONGO_PASSWORD": "WOdxYrAKNrHCrPeg",
-    "MONGO_DB": "daily-block",
-    "jwtSecretKey" : "temporarySecretKey"
-  }
-}
