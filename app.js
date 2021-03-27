@@ -79,7 +79,6 @@ app.use('/graphql', graphqlHTTP({
 
     type RootQuery {
       familyIndex: Distinct!
-      familyBlocks(date: Float!): [Block!]
       blocks(familyIndex: [Float!], label: String): [Block!]
       login(email: String!, password: String!): AuthData!
     }
@@ -144,7 +143,7 @@ app.use('/graphql', graphqlHTTP({
         throw new Error('Password is incorrect!')
       }
 
-      const token = jwt.sign({ userId: user.id }, 'temporarySecretKey', {
+      const token = jwt.sign({ userId: user.id }, process.env.jwtSecretKey, {
         expiresIn: '1h'
       })
 
