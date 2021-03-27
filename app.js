@@ -110,22 +110,6 @@ app.use('/graphql', graphqlHTTP({
         console.log(error)
       }
     },
-    familyBlocks: async (args, req) => {
-      if (!req.isAuth) {
-        throw new Error(errorTypes.UNAUTHORIZED)
-      }
-
-      const blocksQuery = { creator: req.userId, date: args.date }
-
-      try {
-        const blocks = await Block.find(blocksQuery).sort({ sn: 1 })
-        return blocks.map(block => {
-          return { ...block._doc, _id: block.id }
-        })
-      } catch (error) {
-        console.log(error)
-      }
-    },
     blocks: async (args, req) => {
       if (!req.isAuth) {
         throw new Error(errorTypes.UNAUTHORIZED)
