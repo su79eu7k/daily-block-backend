@@ -25,9 +25,14 @@ app.use((req, res, next) => {
 app.use(isAuth)
 app.use('/graphql', graphqlHTTP({
   customFormatErrorFn: (error) => {
+    // console.log(error)
     return errorDetails[error.message]
   },
   schema: buildSchema(`
+    type Distinct {
+      distinct: [Float]!
+    }
+
     type Block {
       _id: ID!
       label: String!
@@ -73,8 +78,9 @@ app.use('/graphql', graphqlHTTP({
     }
 
     type RootQuery {
+      familyIndex: Distinct!
       familyBlocks(date: Float!): [Block!]
-      blocks(label: String!): [Block!]
+      blocks(familyIndex: [Float!], label: String): [Block!]
       login(email: String!, password: String!): AuthData!
     }
 
@@ -88,9 +94,22 @@ app.use('/graphql', graphqlHTTP({
     schema {
       query: RootQuery
       mutation: RootMutation
-    }
-    `),
+    }`
+  ),
   rootValue: {
+    familyIndex: async (args, req) => {
+      if (!req.isAuth) {
+        throw new Error(errorTypes.UNAUTHORIZED)
+      }
+
+      const blocksQuery = { creator: req.userId }
+
+      try {
+        return { distinct: await Block.find(blocksQuery).distinct('date') }
+      } catch (error) {
+        console.log(error)
+      }
+    },
     familyBlocks: async (args, req) => {
       if (!req.isAuth) {
         throw new Error(errorTypes.UNAUTHORIZED)
@@ -112,9 +131,11 @@ app.use('/graphql', graphqlHTTP({
         throw new Error(errorTypes.UNAUTHORIZED)
       }
 
+      console.log(args)
+
       let blocksQuery
       if (args.label === '') {
-        blocksQuery = { creator: req.userId }
+        blocksQuery = { creator: req.userId, date: { $in: args.familyIndex } }
       } else {
         blocksQuery = { creator: req.userId, label: args.label }
       }
