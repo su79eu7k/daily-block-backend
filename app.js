@@ -147,7 +147,7 @@ app.use('/graphql', graphqlHTTP({
         expiresIn: '1h'
       })
 
-      return { userId: user.id, token: token, tokenExpiration: 1 }
+      return { token: token }
     },
     createBlock: async (args, req) => {
       if (!req.isAuth) {
@@ -232,7 +232,7 @@ app.use('/graphql', graphqlHTTP({
         expiresIn: '1h'
       })
 
-      return { userId: user.id, token: token, tokenExpiration: 1 }
+      return { token: token }
     }
   },
   graphiql: true
