@@ -50,9 +50,7 @@ app.use('/graphql', graphqlHTTP({
     }
 
     type AuthData {
-      userId: ID!
       token: String!
-      tokenExpiration: Int!
     }
 
     type DeletedCount {
@@ -81,6 +79,7 @@ app.use('/graphql', graphqlHTTP({
       familyIndex: Distinct!
       blocks(familyIndex: [Float!], label: String): [Block!]
       login(email: String!, password: String!): AuthData!
+      extendToken: AuthData!
     }
 
     type RootMutation {
@@ -229,6 +228,17 @@ app.use('/graphql', graphqlHTTP({
         await user.save()
       }
       const token = jwt.sign({ userId: user.id }, process.env.jwtSecretKey, {
+        expiresIn: '1h'
+      })
+
+      return { token: token }
+    },
+    extendToken: async (args, req) => {
+      if (!req.isAuth) {
+        throw new Error(errorTypes.UNAUTHORIZED)
+      }
+
+      const token = jwt.sign({ userId: req.userId }, process.env.jwtSecretKey, {
         expiresIn: '1h'
       })
 
