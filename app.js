@@ -41,6 +41,10 @@ app.use('/graphql', graphqlHTTP({
       sn: Int!
     }
 
+    type DeletedCount {
+      deletedCount: Int!
+    }
+
     type User {
       _id: ID!
       email: String!
@@ -51,10 +55,6 @@ app.use('/graphql', graphqlHTTP({
 
     type AuthData {
       token: String!
-    }
-
-    type DeletedCount {
-      deletedCount: Int!
     }
 
     input BlockInput {
@@ -113,8 +113,6 @@ app.use('/graphql', graphqlHTTP({
         throw new Error(errorTypes.UNAUTHORIZED)
       }
 
-      console.log(args)
-
       let blocksQuery
       if (args.label === '') {
         blocksQuery = { creator: req.userId, date: { $in: args.familyIndex } }
@@ -130,23 +128,6 @@ app.use('/graphql', graphqlHTTP({
       } catch (error) {
         console.log(error)
       }
-    },
-    login: async ({ email, password }) => {
-      const user = await User.findOne({ email: email })
-      if (!user) {
-        throw new Error('User does not exist!')
-      }
-
-      const isEqual = await bcrypt.compare(password, user.password)
-      if (!isEqual) {
-        throw new Error('Password is incorrect!')
-      }
-
-      const token = jwt.sign({ userId: user.id }, process.env.jwtSecretKey, {
-        expiresIn: '1h'
-      })
-
-      return { token: token }
     },
     createBlock: async (args, req) => {
       if (!req.isAuth) {
@@ -217,6 +198,23 @@ app.use('/graphql', graphqlHTTP({
         console.log(error)
       }
     },
+    login: async ({ email, password }) => {
+      const user = await User.findOne({ email: email })
+      if (!user) {
+        throw new Error('User does not exist!')
+      }
+
+      const isEqual = await bcrypt.compare(password, user.password)
+      if (!isEqual) {
+        throw new Error('Password is incorrect!')
+      }
+
+      const token = jwt.sign({ userId: user.id }, process.env.jwtSecretKey, {
+        expiresIn: '600s'
+      })
+
+      return { token: token }
+    },
     authUserGoogle: async (args) => {
       const user = await User.findOne({ email: args.authUserGoogleInput.email })
       if (!user) {
@@ -228,7 +226,7 @@ app.use('/graphql', graphqlHTTP({
         await user.save()
       }
       const token = jwt.sign({ userId: user.id }, process.env.jwtSecretKey, {
-        expiresIn: '1h'
+        expiresIn: '600s'
       })
 
       return { token: token }
@@ -239,7 +237,7 @@ app.use('/graphql', graphqlHTTP({
       }
 
       const token = jwt.sign({ userId: req.userId }, process.env.jwtSecretKey, {
-        expiresIn: '1h'
+        expiresIn: '600s'
       })
 
       return { token: token }
