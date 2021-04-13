@@ -210,7 +210,7 @@ app.use('/graphql', graphqlHTTP({
       }
 
       const token = jwt.sign({ userId: user.id }, process.env.jwtSecretKey, {
-        expiresIn: '600s'
+        expiresIn: '3h'
       })
 
       return { token: token }
@@ -226,7 +226,7 @@ app.use('/graphql', graphqlHTTP({
         await user.save()
       }
       const token = jwt.sign({ userId: user.id }, process.env.jwtSecretKey, {
-        expiresIn: '600s'
+        expiresIn: '3h'
       })
 
       return { token: token }
@@ -237,7 +237,7 @@ app.use('/graphql', graphqlHTTP({
       }
 
       const token = jwt.sign({ userId: req.userId }, process.env.jwtSecretKey, {
-        expiresIn: '600s'
+        expiresIn: '3h'
       })
 
       return { token: token }
