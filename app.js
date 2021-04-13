@@ -24,13 +24,6 @@ app.use((req, res, next) => {
   next()
 })
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'build')))
-  app.get('/*', function (req, res) {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'))
-  })
-}
-
 app.use(isAuth)
 app.use('/graphql', graphqlHTTP({
   customFormatErrorFn: (error) => {
@@ -254,6 +247,13 @@ app.use('/graphql', graphqlHTTP({
   },
   graphiql: true
 }))
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'build')))
+  app.get('/*', function (req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'))
+  })
+}
 
 mongoose.connect(
   `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.d7f4t.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority`
