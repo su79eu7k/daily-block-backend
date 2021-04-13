@@ -12,6 +12,7 @@ const isAuth = require('./middleware/is-auth')
 const { errorTypes, errorDetails } = require('./errors/error-types')
 
 const app = express()
+const path = require('path')
 app.use(express.json())
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -22,6 +23,14 @@ app.use((req, res, next) => {
   }
   next()
 })
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'build')))
+  app.get('/*', function (req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'))
+  })
+}
+
 app.use(isAuth)
 app.use('/graphql', graphqlHTTP({
   customFormatErrorFn: (error) => {
