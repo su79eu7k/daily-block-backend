@@ -14,15 +14,18 @@ const { errorTypes, errorDetails } = require('./errors/error-types')
 const app = express()
 const path = require('path')
 app.use(express.json())
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200)
-  }
-  next()
-})
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200)
+    }
+    next()
+  })
+}
 
 app.use(isAuth)
 app.use('/graphql', graphqlHTTP({
@@ -245,7 +248,7 @@ app.use('/graphql', graphqlHTTP({
       return { token: token }
     }
   },
-  graphiql: true
+  graphiql: process.env.NODE_ENV !== 'production'
 }))
 
 if (process.env.NODE_ENV === 'production') {
