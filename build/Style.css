@@ -130,7 +130,7 @@ html, body {
 }
 
 .card--io--body--elem textarea {
-  min-width: 240px;
+  min-width: 300px;
   min-height: 200px;
   border-radius: .3rem;
   border-width: 0px;
@@ -177,6 +177,15 @@ html, body {
   font-family: inherit;
   font-size: .7rem;
   color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .card--io--body--footer input, 
+  .card--io--body--footer button {
+    height: 2rem;
+    width: 5rem;
+    font-size: .9rem;
+  }
 }
 
 .card--io--body--footer input:hover, 
@@ -266,10 +275,22 @@ html, body {
   color: #857e7a;
 }
 
+@media (max-width: 600px) {
+  .timestamp {
+    font-size: 1rem;
+  }
+}
+
 .icon-btn {
   margin-left: 5px;
   font-size: .9rem;
   color:#857e7a;
+}
+
+@media (max-width: 600px) {
+  .icon-btn {
+    font-size: 1rem;
+  }
 }
 
 .icon-btn:hover {
