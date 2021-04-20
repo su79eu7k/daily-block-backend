@@ -61,8 +61,13 @@ html, body {
   border-width: 0px;
   background-color: transparent;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: .9rem;
   color: #857e7a;
+}
+@media (max-width: 600px) {
+  #nav ul li button {
+    font-size: 1.1rem;
+  }
 }
 
 #nav ul li button:hover {
@@ -189,7 +194,7 @@ html, body {
 
 .card--contents--container {
   margin: auto auto;
-  width: 240px;
+  width: 300px;
   display: flex;
   flex-flow: column nowrap;
   align-items: center;
@@ -218,7 +223,7 @@ html, body {
 /* Content */
 
 .card--content--container {
-  width: 240px;
+  width: 300px;
   display: flex;
   flex-flow: column nowrap;
   align-items: stretch;
